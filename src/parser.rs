@@ -4,16 +4,16 @@ use crate::lexer::{Token, TokenKind};
 #[derive(Debug)]
 pub enum Error {
   ParseError,
-  UnexpectedToken,
-  UnexpectedBinaryOperator,
+  UnexpectedToken(String),
+  NotFoundBinaryOperator(String),
 }
 
 impl std::fmt::Display for Error {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
       Error::ParseError => write!(f, "Parse error"),
-      Error::UnexpectedToken => write!(f, "Unexpected token"),
-      Error::UnexpectedBinaryOperator => write!(f, "Unexpected binary operator"),
+      Error::UnexpectedToken(token) => write!(f, "Unexpected token: {}", token),
+      Error::NotFoundBinaryOperator(s) => write!(f, "Not found binary operator: {}", s),
     }
   }
 }
@@ -60,7 +60,7 @@ impl<'a> Parser<'a> {
       TokenKind::Slash => Ok(BinaryOperator::Divide),
       TokenKind::StarStar => Ok(BinaryOperator::Power),
       TokenKind::Percent => Ok(BinaryOperator::Modulo),
-      _ => Err(Error::UnexpectedBinaryOperator),
+      _ => Err(Error::NotFoundBinaryOperator(format!("{:?}", kind)))
     }
   }
 
@@ -77,7 +77,7 @@ impl<'a> Parser<'a> {
       self.cursor += 1;
       Ok(())
     } else {
-      Err(Error::UnexpectedToken)
+      Err(Error::UnexpectedToken(format!("{:?}", curr.kind)))
     }
   }
 
@@ -109,7 +109,7 @@ impl<'a> Parser<'a> {
         Ok(expr)
       },
       _ => {
-        Err(Error::UnexpectedToken)
+        Err(Error::UnexpectedToken(format!("{:?}", curr.kind)))
       }
     }
   }
