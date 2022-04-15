@@ -6,5 +6,10 @@ fn main() {
     Ok(result) => println!("{}", result),
     Err(error) => println!("{}", error),
   }
+
+  match Evaluator::evaluate("cos(1)") {
+    Ok(result) => println!("{}", result),
+    Err(error) => println!("{}", error),
+  }
 }
 ```
