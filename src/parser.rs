@@ -4,7 +4,7 @@ use crate::lexer::{Token, TokenKind};
 #[derive(Debug)]
 pub enum Error {
   ParseError,
-  UnexpectedToken(String),
+  UncaughtReferenceError(String),
   NotFoundBinaryOperator(String),
 }
 
@@ -12,7 +12,7 @@ impl std::fmt::Display for Error {
   fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
     match self {
       Error::ParseError => write!(f, "Parse error"),
-      Error::UnexpectedToken(token) => write!(f, "Unexpected token: {}", token),
+      Error::UncaughtReferenceError(function) => write!(f, "Uncaught ReferenceError: {} is not defined", function),
       Error::NotFoundBinaryOperator(s) => write!(f, "Not found binary operator: {}", s),
     }
   }
@@ -43,6 +43,7 @@ impl std::fmt::Debug for BinaryOperator {
 #[derive(Debug)]
 pub enum Expr {
   NumberExpr(f64),
+  CallExpr(String, Box<Expr>),
   BinaryOperatorExpr(Box<Expr>, BinaryOperator, Box<Expr>),
 }
 
@@ -77,7 +78,7 @@ impl<'a> Parser<'a> {
       self.cursor += 1;
       Ok(())
     } else {
-      Err(Error::UnexpectedToken(format!("{:?}", curr.kind)))
+      Err(Error::UncaughtReferenceError(format!("{:?}", curr.kind)))
     }
   }
 
@@ -102,6 +103,13 @@ impl<'a> Parser<'a> {
           Err(_) => Err(Error::ParseError),
         };
       },
+      TokenKind::Identifier => {
+        self.eat(TokenKind::Identifier)?;
+        self.eat(TokenKind::OpenParen)?;
+        let expr = self.expr()?;
+        self.eat(TokenKind::CloseParen)?;
+        Ok(Expr::CallExpr(curr.slice.to_string(), Box::new(expr)))
+      },
       TokenKind::OpenParen => {
         self.eat(TokenKind::OpenParen)?;
         let expr = self.expr()?;
@@ -109,7 +117,7 @@ impl<'a> Parser<'a> {
         Ok(expr)
       },
       _ => {
-        Err(Error::UnexpectedToken(format!("{:?}", curr.kind)))
+        Err(Error::UncaughtReferenceError(format!("{:?}", curr.kind)))
       }
     }
   }

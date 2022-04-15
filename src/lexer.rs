@@ -15,6 +15,7 @@ impl<'a> Token<'a> {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum TokenKind {
   Number,
+  Identifier,
 
   Plus,
   Minus,
